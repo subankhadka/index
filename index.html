@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nirakar Attendance</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #fffbea;
+    color: #2f4f2f;
+    display: flex;
+    min-height: 100vh;
+  }
+  #sidebar {
+    background: #3a6b35;
+    color: #d0f0c0;
+    width: 240px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  #sidebar img, #logo {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    border-radius: 50%;
+    background: #d0f0c0;
+    padding: 10px;
+  }
+  #sidebar h1 {
+    font-size: 1.6rem;
+    margin: 0;
+    text-align: center;
+    font-weight: 700;
+  }
+  #main {
+    flex: 1;
+    padding: 30px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+  h2 {
+    color: #2f4f2f;
+    margin-bottom: 15px;
+  }
+  label {
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  select, input[type="password"], input[type="text"], input[type="time"], input[type="date"], button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 2px solid #3a6b35;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  button {
+    background: #3a6b35;
+    color: #d0f0c0;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.3s ease;
+    font-weight: 700;
+  }
+  button:hover:not(:disabled) {
+    background: #275022;
+  }
+  button:disabled {
+    background: #a4bba0;
+    cursor: not-allowed;
+  }
+  #attendanceInfo {
+    margin-top: 20px;
+    padding: 15px;
+    background: #d0f0c0aa;
+    border-radius: 8px;
+    color: #27491a;
+    font-weight: 600;
+  }
+  #adminPanel {
+    margin-top: 30px;
+    border-top: 2px solid #3a6b35;
+    padding-top: 20px;
+  }
+  #attendanceTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  #attendanceTable th, #attendanceTable td {
+    border: 1px solid #3a6b35;
+    padding: 8px 12px;
+    text-align: center;
+  }
+  #attendanceTable th {
+    background: #3a6b35;
+    color: #d0f0c0;
+  }
+  #exportBtn {
+    margin-top: 15px;
+    background: #275022;
+  }
+  #loginScreen, #userScreen, #adminScreen {
+    max-width: 600px;
+    width: 100%;
+  }
+  .message {
+    margin-top: 15px;
+    font-weight: 600;
+    color: #b22222;
+  }
+  .success {
+    color: #2e8b57;
+  }
+  .action-btn {
+    padding: 4px 8px;
+    margin: 2px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 4px;
+    border: none;
+    color: white;
+  }
+  .btn-remove {
+    background: #b22222;
+  }
+  .btn-edit {
+    background: #3a6b35;
+  }
+  .btn-save {
+    background: #275022;
+  }
+  .location-cell {
+    font-size: 0.85rem;
+    color: #0b3d0b;
+  }
+  #employeeList {
+    margin-top: 10px;
+    border: 1px solid #3a6b35;
+    padding: 10px;
+    border-radius: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+    background: #d0f0c0aa;
+    color: #27491a;
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <svg id="logo" xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 64 64" fill="none">
+    <circle cx="32" cy="32" r="30" stroke="#d0f0c0" stroke-width="4" fill="#3a6b35"/>
+    <path fill="#d0f0c0" d="M32 14c-6 10-6 24 0 34 6-10 6-24 0-34z"/>
+    <path fill="#a3c583" d="M32 20c-3 5-3 12 0 17 3-5 3-12 0-17z"/>
+  </svg>
+  <h1>Nirakar Attendance</h1>
+</div>
+
+<div id="main">
+
+  <!-- Login screen -->
+  <div id="loginScreen">
+    <h2>User Login</h2>
+    <label for="userPassword">Enter Password</label>
+    <input type="password" id="userPassword" placeholder="Password" autocomplete="off" />
+    <button id="userLoginBtn">Login</button>
+    <div id="loginMsg" class="message"></div>
+  </div>
+
+  <!-- User attendance screen -->
+  <div id="userScreen" style="display:none;">
+    <h2>Mark Your Attendance</h2>
+    <label for="employeeSelect">Select Your Name</label>
+    <select id="employeeSelect">
+      <option value="">-- Select --</option>
+    </select>
+
+    <button id="checkInBtn" disabled>Check In</button>
+    <button id="checkOutBtn" disabled>Check Out</button>
+
+    <div id="attendanceInfo"></div>
+
+    <button id="logoutUserBtn" style="margin-top:25px; background:#b22222;">Logout</button>
+  </div>
+
+  <!-- Admin screen -->
+  <div id="adminScreen" style="display:none;">
+    <h2>Admin Panel</h2>
+    <label for="adminPassword">Admin Password</label>
+    <input type="password" id="adminPasswordInput" placeholder="Enter admin password" />
+    <button id="adminUnlockBtn">Unlock Admin Panel</button>
+    <div id="adminUnlockMsg" class="message"></div>
+
+    <div id="adminPanel" style="display:none;">
+      <button id="logoutAdminBtn" style="background:#b22222; margin-top: 10px;">Logout Admin</button>
+
+      <h3>Manage Employees</h3>
+      <input type="text" id="newEmployeeName" placeholder="New employee full name" />
+      <button id="addEmployeeBtn">Add Employee</button>
+      <div id="employeeList"></div>
+
+      <h3>Attendance Records</h3>
+      <table id="attendanceTable">
+        <thead>
+          <tr>
+            <th>Date<br>(YYYY-MM-DD)</th>
+            <th>Name</th>
+            <th>Check In Time</th>
+            <th>Check In Location</th>
+            <th>Check Out Time</th>
+            <th>Check Out Location</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Data rows here -->
+        </tbody>
+      </table>
+      <button id="exportBtn">Export CSV</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Initial employees
+  let employees = [
+    "Rita Dulal",
+    "Padam Kumari Acharya",
+    "Anisha Puri",
+    "Yasoda Basnet",
+    "Anjali Tajpuriya",
+    "Binita Vishwokarma",
+    "Lakpa Diki Sherpa",
+    "Lila Bastola",
+    "Bir ba Nepal"
+  ];
+
+  // Passwords
+  const userPassword = "nirakar123";
+  const adminPassword = "admin123";
+
+  // Elements
+  const loginScreen = document.getElementById("loginScreen");
+  const userScreen = document.getElementById("userScreen");
+  const adminScreen = document.getElementById("adminScreen");
+
+  const userPasswordInput = document.getElementById("userPassword");
+  const userLoginBtn = document.getElementById("userLoginBtn");
+  const loginMsg = document.getElementById("loginMsg");
+
+  const employeeSelect = document.getElementById("employeeSelect");
+  const checkInBtn = document.getElementById("checkInBtn");
+  const checkOutBtn = document.getElementById("checkOutBtn");
+  const attendanceInfo = document.getElementById("attendanceInfo");
+  const logoutUserBtn = document.getElementById("logoutUserBtn");
+
+  const adminPasswordInput = document.getElementById("adminPasswordInput");
+  const adminUnlockBtn = document.getElementById("adminUnlockBtn");
+  const adminUnlockMsg = document.getElementById("adminUnlockMsg");
+  const adminPanel = document.getElementById("adminPanel");
+  const logoutAdminBtn = document.getElementById("logoutAdminBtn");
+  const attendanceTableBody = document.querySelector("#attendanceTable tbody");
+  const exportBtn = document.getElementById("exportBtn");
+  const newEmployeeNameInput = document.getElementById("newEmployeeName");
+  const addEmployeeBtn = document.getElementById("addEmployeeBtn");
+  const employeeListDiv = document.getElementById("employeeList");
+
+  // Helper functions for date/time
+  function getTodayDate() {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  }
+  function getCurrentTime24() {
+    const d = new Date();
+    let h = d.getHours();
+    let m = d.getMinutes();
+    if (h < 10) h = '0' + h;
+    if (m < 10) m = '0' + m;
+    return `${h}:${m}`;
+  }
+  // Get day of week 0=Sun,6=Sat
+  function getDayOfWeek(dateStr) {
+    return new Date(dateStr).getDay();
+  }
+
+  // LocalStorage keys
+  const ATTENDANCE_KEY = "nirakar_attendance_records";
+  const EMPLOYEE_KEY = "nirakar_employees";
+
+  // Load/save employees
+  function loadEmployees() {
+    const raw = localStorage.getItem(EMPLOYEE_KEY);
+    if (!raw) return employees.slice();
+    try {
+      const emp = JSON.parse(raw);
+      if (Array.isArray(emp)) return emp;
+      return employees.slice();
+    } catch {
+      return employees.slice();
+    }
+  }
+  function saveEmployees(empList) {
+    localStorage.setItem(EMPLOYEE_KEY, JSON.stringify(empList));
+  }
+
+  // Load/save attendance records
+  function loadAttendanceRecords() {
+    const raw = localStorage.getItem(ATTENDANCE_KEY);
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  function saveAttendanceRecords(records) {
+    localStorage.setItem(ATTENDANCE_KEY, JSON.stringify(records));
+  }
+
+  // Fill employee dropdown for user
+  function fillEmployeeDropdown() {
+    employeeSelect.innerHTML = '<option value="">-- Select --</option>';
+    employees.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      employeeSelect.appendChild(opt);
+    });
+  }
+
+  // Update buttons and info on user screen
+  function updateButtons(name) {
+    if (!name) {
+      checkInBtn.disabled = true;
+      checkOutBtn.disabled = true;
+      attendanceInfo.textContent = "";
+      return;
+    }
+    const records = loadAttendanceRecords();
+    const today = getTodayDate();
+
+    // Check Saturday holiday (6 = Saturday)
+    const dayOfWeek = getDayOfWeek(today);
+    if (dayOfWeek === 6) {
+      attendanceInfo.textContent = "Today is Saturday (Holiday). Attendance cannot be marked.";
+      checkInBtn.disabled = true;
+      checkOutBtn.disabled = true;
+      return;
+    }
+
+    const todayRecords = records[today] || {};
+    const userRecord = todayRecords[name] || {};
+
+    checkInBtn.disabled = !!userRecord.checkIn;
+    checkOutBtn.disabled = !userRecord.checkIn || !!userRecord.checkOut;
+
+    let info = "";
+    if (userRecord.checkIn) info += `Checked In at: ${userRecord.checkIn} (${userRecord.checkInLoc || "Location N/A"}). `;
+    if (userRecord.checkOut) info += `Checked Out at: ${userRecord.checkOut} (${userRecord.checkOutLoc || "Location N/A"}).`;
+    attendanceInfo.textContent = info;
+  }
+
+  // User login button
+  userLoginBtn.onclick = () => {
+    const pass = userPasswordInput.value.trim();
+    if (pass === userPassword) {
+      loginMsg.textContent = "";
+      employees = loadEmployees();
+      fillEmployeeDropdown();
+      loginScreen.style.display = "none";
+      userScreen.style.display = "block";
+    } else if (pass === adminPassword) {
+      loginMsg.textContent = "Please use Admin Panel on right to login.";
+      loginMsg.classList.remove("success");
+    } else {
+      loginMsg.textContent = "Incorrect password!";
+      loginMsg.classList.remove("success");
+    }
+  };
+
+  logoutUserBtn.onclick = () => {
+    userScreen.style.display = "none";
+    loginScreen.style.display = "block";
+    userPasswordInput.value = "";
+    attendanceInfo.textContent = "";
+    employeeSelect.value = "";
+    checkInBtn.disabled = true;
+    checkOutBtn.disabled = true;
+  };
+
+  employeeSelect.onchange = () => {
+    updateButtons(employeeSelect.value);
+  };
+
+  // Get location helper returns Promise<string>
+  function getLocationString() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve("Location not supported");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(pos => {
+        resolve(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
+      }, () => {
+        resolve("Location not provided");
+      }, {timeout: 10000});
+    });
+  }
+
+  // Check-in
+  checkInBtn.onclick = async () => {
+    const name = employeeSelect.value;
+    if (!name) return alert("Select your name!");
+    const today = getTodayDate();
+
+    // Disable attendance on Saturday
+    if (getDayOfWeek(today) === 6) {
+      alert("Today is Saturday (Holiday). Attendance not allowed.");
+      return;
+    }
+
+    const time = getCurrentTime24();
+    const loc = await getLocationString();
+
+    const records = loadAttendanceRecords();
+    records[today] = records[today] || {};
+    if (records[today][name]?.checkIn) {
+      alert("You already checked in today.");
+      updateButtons(name);
+      return;
+    }
+    records[today][name] = records[today][name] || {};
+    records[today][name].checkIn = time;
+    records[today][name].checkInLoc = loc;
+    saveAttendanceRecords(records);
+    updateButtons(name);
+    alert(`Checked in at ${time} (Location: ${loc})`);
+  };
+
+  // Check-out
+  checkOutBtn.onclick = async () => {
+    const name = employeeSelect.value;
+    if (!name) return alert("Select your name!");
+    const today = getTodayDate();
+
+    if (getDayOfWeek(today) === 6) {
+      alert("Today is Saturday (Holiday). Attendance not allowed.");
+      return;
+    }
+
+    const time = getCurrentTime24();
+    const loc = await getLocationString();
+
+    const records = loadAttendanceRecords();
+    if (!records[today] || !records[today][name]?.checkIn) {
+      alert("You must check in before checking out!");
+      return;
+    }
+    if (records[today][name].checkOut) {
+      alert("You already checked out today.");
+      updateButtons(name);
+      return;
+    }
+    records[today][name].checkOut = time;
+    records[today][name].checkOutLoc = loc;
+    saveAttendanceRecords(records);
+    updateButtons(name);
+    alert(`Checked out at ${time} (Location: ${loc})`);
+  };
+
+  // ADMIN PANEL LOGIC
+
+  // Show employee list in admin panel
+  function renderEmployeeList() {
+    employeeListDiv.innerHTML = "";
+    if (employees.length === 0) {
+      employeeListDiv.textContent = "No employees added.";
+      return;
+    }
+    employees.forEach((name, i) => {
+      const div = document.createElement("div");
+      div.style.display = "flex";
+      div.style.justifyContent = "space-between";
+      div.style.alignItems = "center";
+      div.style.marginBottom = "4px";
+      div.textContent = name;
+
+      const btnRemove = document.createElement("button");
+      btnRemove.textContent = "Remove";
+      btnRemove.className = "action-btn btn-remove";
+      btnRemove.onclick = () => {
+        if (confirm(`Remove employee "${name}"? This will not delete past attendance records.`)) {
+          employees.splice(i, 1);
+          saveEmployees(employees);
+          fillEmployeeDropdown();
+          renderEmployeeList();
+        }
+      };
+      div.appendChild(btnRemove);
+      employeeListDiv.appendChild(div);
+    });
+  }
+
+  // Add employee
+  addEmployeeBtn.onclick = () => {
+    const newName = newEmployeeNameInput.value.trim();
+    if (!newName) return alert("Enter employee full name");
+    if (employees.includes(newName)) return alert("Employee already exists");
+    employees.push(newName);
+    saveEmployees(employees);
+    fillEmployeeDropdown();
+    renderEmployeeList();
+    newEmployeeNameInput.value = "";
+    alert(`Added employee "${newName}"`);
+  };
+
+  // Admin unlock
+  adminUnlockBtn.onclick = () => {
+    if (adminPasswordInput.value === adminPassword) {
+      adminUnlockMsg.textContent = "";
+      adminPanel.style.display = "block";
+      renderEmployeeList();
+      fillAttendanceTable();
+      adminPasswordInput.value = "";
+    } else {
+      adminUnlockMsg.textContent = "Incorrect admin password!";
+      adminUnlockMsg.classList.remove("success");
+    }
+  };
+
+  // Admin logout
+  logoutAdminBtn.onclick = () => {
+    adminPanel.style.display = "none";
+    adminUnlockMsg.textContent = "";
+    adminScreen.style.display = "none";
+    loginScreen.style.display = "block";
+  };
+
+  // Fill attendance table for admin
+  function fillAttendanceTable() {
+    attendanceTableBody.innerHTML = "";
+    const records = loadAttendanceRecords();
+    // Sort dates descending
+    const dates = Object.keys(records).sort((a,b) => b.localeCompare(a));
+    for (const date of dates) {
+      const dayRecords = records[date];
+      for (const name in dayRecords) {
+        const rec = dayRecords[name];
+        const tr = document.createElement("tr");
+
+        // Create editable cells for date, checkIn, checkOut times
+        tr.innerHTML = `
+          <td><input type="date" value="${date}" class="edit-date" /></td>
+          <td>${name}</td>
+          <td><input type="time" value="${rec.checkIn || ''}" class="edit-checkin" /></td>
+          <td class="location-cell">${rec.checkInLoc || "-"}</td>
+          <td><input type="time" value="${rec.checkOut || ''}" class="edit-checkout" /></td>
+          <td class="location-cell">${rec.checkOutLoc || "-"}</td>
+          <td>
+            <button class="action-btn btn-save">Save</button>
+          </td>
+        `;
+
+        // Save button logic
+        const saveBtn = tr.querySelector(".btn-save");
+        saveBtn.onclick = () => {
+          const newDate = tr.querySelector(".edit-date").value;
+          const newCheckIn = tr.querySelector(".edit-checkin").value;
+          const newCheckOut = tr.querySelector(".edit-checkout").value;
+
+          // Validate date
+          if (!newDate) return alert("Date cannot be empty");
+          if (!employees.includes(name)) return alert("Employee no longer exists");
+
+          // Load records and update
+          const records = loadAttendanceRecords();
+
+          // Remove old record if date changed
+          if (newDate !== date) {
+            if (records[date]) {
+              delete records[date][name];
+              if (Object.keys(records[date]).length === 0) delete records[date];
+            }
+          }
+
+          records[newDate] = records[newDate] || {};
+          records[newDate][name] = records[newDate][name] || {};
+
+          // Update times
+          if(newCheckIn) records[newDate][name].checkIn = newCheckIn; else delete records[newDate][name].checkIn;
+          if(newCheckOut) records[newDate][name].checkOut = newCheckOut; else delete records[newDate][name].checkOut;
+
+          // Keep existing location if moving date? For simplicity, remove location if date changed
+          if(newDate !== date) {
+            delete records[newDate][name].checkInLoc;
+            delete records[newDate][name].checkOutLoc;
+          } else {
+            // keep old locations
+            if (records[date] && records[date][name]) {
+              records[newDate][name].checkInLoc = records[date][name].checkInLoc || "";
+              records[newDate][name].checkOutLoc = records[date][name].checkOutLoc || "";
+            }
+          }
+
+          saveAttendanceRecords(records);
+          alert("Record saved");
+          fillAttendanceTable();
+        };
+
+        attendanceTableBody.appendChild(tr);
+      }
+    }
+  }
+
+  // Export CSV
+  exportBtn.onclick = () => {
+    const records = loadAttendanceRecords();
+    let csv = "Date,Name,Check In Time,Check In Location,Check Out Time,Check Out Location\n";
+    const dates = Object.keys(records).sort((a,b) => b.localeCompare(a));
+    for (const date of dates) {
+      const dayRecords = records[date];
+      for (const name in dayRecords) {
+        const rec = dayRecords[name];
+        csv += `"${date}","${name}","${rec.checkIn || ''}","${rec.checkInLoc || ''}","${rec.checkOut || ''}","${rec.checkOutLoc || ''}"\n`;
+      }
+    }
+    const blob = new Blob([csv], {type: "text/csv"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "nirakar_attendance.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Initialization
+  function init() {
+    employees = loadEmployees();
+  }
+
+  // Run on load
+  init();
+
+</script>
+
+</body>
+</html>
